@@ -1,0 +1,46 @@
+name: Java CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build Maven Project
+        run: mvn clean package -DskipTests
+
+      - name: Verify WAR file
+        run: test -f target/WebApp.war
+
+      - name: Build Docker Image
+        run: docker build -t webapp .
+
+      - name: Push Docker image to Docker Hub
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "Skipping Docker Hub push (add DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets to enable)"
+            exit 0
+          fi
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker tag webapp "$DOCKERHUB_USERNAME/webapp:latest"
+          docker push "$DOCKERHUB_USERNAME/webapp:latest"

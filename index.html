@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebApp - GitHub Actions CI/CD</title>
+</head>
+<body>
+    <h1>Welcome to WebApp GitHub Actions CI/CD Demo!</h1>
+    <p>This page is deployed automatically from the <strong>main</strong> branch using GitHub Actions.</p>
+
+    <h2>About This Lab</h2>
+    <p>This repository contains a Java Maven web application (JSP + Tomcat) with Docker and GitHub Actions pipelines.</p>
+    <p>Every time you push changes to <strong>main</strong>, workflows build the project and can deploy this site to GitHub Pages.</p>
+
+    <h2>Run the Java application</h2>
+    <p>Build and run with Docker locally:</p>
+    <pre>mvn clean package -DskipTests
+docker build -t webapp .
+docker run -p 8081:8080 webapp</pre>
+    <p>Then open: <a href="http://localhost:8081/WebApp/">http://localhost:8081/WebApp/</a></p>
+</body>
+</html>

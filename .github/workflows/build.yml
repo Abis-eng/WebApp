@@ -1,0 +1,48 @@
+name: Build Website
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Validate index.html exists
+        run: |
+          if [ ! -f index.html ]; then
+            echo "ERROR: index.html is missing"
+            exit 1
+          fi
+          echo "SUCCESS: index.html found"
+
+      - name: Validate JSP application files
+        run: |
+          test -f src/main/webapp/index.jsp
+          test -f src/main/webapp/welcome.jsp
+          test -f src/main/webapp/multiplication.jsp
+          echo "SUCCESS: JSP files found"
+
+      - name: Build Maven project
+        run: mvn clean package -DskipTests
+
+      - name: Verify WAR artifact
+        run: |
+          if [ ! -f target/WebApp.war ]; then
+            echo "ERROR: target/WebApp.war was not created"
+            exit 1
+          fi
+          echo "SUCCESS: WebApp.war built"

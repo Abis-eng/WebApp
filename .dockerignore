@@ -1,0 +1,9 @@
+.git
+.idea
+.smarttomcat
+target/classes
+target/test-classes
+target/generated-sources
+target/maven-status
+target/maven-archiver
+*.iml
