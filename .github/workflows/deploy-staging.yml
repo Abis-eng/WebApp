@@ -1,38 +1,31 @@
 name: Deploy Staging to GitHub Pages
 
+# Note: Free GitHub Pages hosts one site per repo. This workflow validates
+# staging content on develop; production deploy runs from main only.
+
 on:
   push:
     branches: ["develop"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages-staging"
-  cancel-in-progress: false
-
 jobs:
-  deploy-staging:
+  staging-check:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Validate staging index.html
+        run: |
+          test -f staging/index.html
+          echo "SUCCESS: staging/index.html is ready for deployment"
 
-      - name: Upload staging artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          path: staging
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Build Maven project
+        run: mvn clean package -DskipTests
