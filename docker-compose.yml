@@ -1,0 +1,11 @@
+# One command: docker compose up --build
+# App URL: http://localhost:8080/WebApp/
+
+services:
+  webapp:
+    build: .
+    image: webapp:latest
+    container_name: webapp-tomcat
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

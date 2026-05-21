@@ -1,7 +1,10 @@
-# Jakarta EE (Servlet 6) needs Tomcat 10+, not Tomcat 9
+# Build WAR inside Docker, then deploy to Tomcat 10 (Jakarta / Servlet 6)
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
 FROM tomcat:10.1-jdk21
-
-# WAR name from pom.xml <finalName>WebApp</finalName> → target/WebApp.war
-COPY target/WebApp.war /usr/local/tomcat/webapps/
-
+COPY --from=build /app/target/WebApp.war /usr/local/tomcat/webapps/
 EXPOSE 8080

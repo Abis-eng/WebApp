@@ -1,7 +1,4 @@
-name: Deploy Staging to GitHub Pages
-
-# Note: Free GitHub Pages hosts one site per repo. This workflow validates
-# staging content on develop; production deploy runs from main only.
+name: Deploy Staging on Tomcat
 
 on:
   push:
@@ -9,16 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  staging-check:
+  deploy-tomcat-staging:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Validate staging index.html
-        run: |
-          test -f staging/index.html
-          echo "SUCCESS: staging/index.html is ready for deployment"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -27,5 +20,40 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Build Maven project
+      - name: Build WAR with Maven
         run: mvn clean package -DskipTests
+
+      - name: Build Tomcat Docker image (staging tag)
+        run: docker build -t webapp:staging .
+
+      - name: Run Tomcat on staging port (localhost in runner)
+        run: |
+          docker rm -f webapp-staging 2>/dev/null || true
+          docker run -d --name webapp-staging -p 8081:8080 webapp:staging
+
+      - name: Wait for Tomcat and verify staging app is live
+        run: |
+          echo "Waiting for Tomcat (staging)..."
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:8081/WebApp/; then
+              echo "SUCCESS: Staging WebApp is live at http://localhost:8081/WebApp/"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "ERROR: Staging Tomcat did not become ready in time"
+          docker logs webapp-staging
+          exit 1
+
+      - name: Stop staging container
+        if: always()
+        run: docker rm -f webapp-staging
+
+      - name: Localhost staging instructions
+        run: |
+          echo "=============================================="
+          echo " Staging on YOUR machine (localhost):"
+          echo "   mvn clean package -DskipTests"
+          echo "   docker run -d -p 8081:8080 --name webapp-staging webapp:staging"
+          echo " Open: http://localhost:8081/WebApp/"
+          echo "=============================================="
